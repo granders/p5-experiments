@@ -3,8 +3,11 @@ function setup() {
     canvasHeight = windowHeight;
     createCanvas(canvasWidth, canvasHeight);
 
+    shapes = [];
     segment1 = new Segment(60, 60, 120, 120);
     segment2 = new Segment(60, 120, 150, 60);
+    shapes.push(segment1);
+    shapes.push(segment2);
 
     // global
     canvasCenter = createVector(canvasWidth / 2, canvasHeight / 2);
@@ -14,10 +17,6 @@ function draw() {
     var intersection;
     background(255);
 
-    if (mouseIsPressed) {
-        segment1.p2 = createVector(mouseX, mouseY);
-    }
-
     segment1.draw();
     segment2.draw();
     intersection = segment1.intersection(segment2);
@@ -25,26 +24,80 @@ function draw() {
     if (intersection) {
         ellipse(intersection.x, intersection.y, 10);
     }
+}
 
+function mousePressed() {
+    var delta = 3;
+    var pressedPoint = createVector(mouseX, mouseY);
+    shapes.map(function(s) {
+        s.points.map(function(p, i) {
+            var d = p5.Vector.sub(p, pressedPoint).mag();
 
+            if (d < delta) {
+                s.selected[i] = true;
+            }
+            else {
+                s.selected[i] = false;
+            }
+        })
+    });
+}
+
+function mouseReleased() {
+    shapes.map(function(s) {
+        s.points.map(function(p, i) {
+            s.selected[i] = false;
+        })
+    });
+}
+
+function mouseDragged() {
+    var currentPosition = createVector(mouseX, mouseY);
+    shapes.map(function(s) {
+        s.points.map(function(p, i) {
+            if (s.selected[i]) {
+                s.updateVertex(currentPosition, i);
+            }
+        })
+    });
 }
 
 function Segment(x1, y1, x2, y2) {
     this.p1 = createVector(x1, y1);
     this.p2 = createVector(x2, y2);
+    this.points = [this.p1, this.p2];
+    this.selected = [false, false];
+}
 
-    this.center = p5.Vector.add(this.p1, this.p2).div(2);
+Segment.prototype.updateVertex = function(p, i) {
+    if (i == 0) {
+        this.p1 = p;
+    }
+    else {
+        this.p2 = p;
+    }
+
+    this.points[i] = p;
 }
 
 Segment.prototype.draw = function() {
     line(this.p1.x, this.p1.y, this.p2.x, this.p2.y);
 
-    // Draw dots at the endpoints
-    push();
-    fill(0);
-    ellipse(this.p1.x, this.p1.y, 5);
-    ellipse(this.p2.x, this.p2.y, 5);
-    pop();
+    // Draw the endpoints
+    var thisSegment = this;
+    this.points.map(function(p, i) {
+        push();
+        if (thisSegment.selected[i]) {
+            fill(255, 0, 0);
+            ellipse(p.x, p.y, 9);
+        }
+        else {
+            fill(0);
+            ellipse(p.x, p.y, 5);
+        }
+        pop();
+
+    });
 }
 
 Segment.prototype.vector = function() {
@@ -78,7 +131,6 @@ Segment.prototype.intersection = function(otherSegment) {
     textSize(32);
     text(t, 60, 30);
     text(u, 30, 250);
-
 
     if (!(t>=0 && t<=1 && u>=0 && u<=1)) {
         // The line segments do not intersect
