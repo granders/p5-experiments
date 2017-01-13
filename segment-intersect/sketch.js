@@ -14,10 +14,19 @@ function draw() {
     var intersection;
     background(255);
 
+    if (mouseIsPressed) {
+        segment1.p2 = createVector(mouseX, mouseY);
+    }
+
     segment1.draw();
     segment2.draw();
     intersection = segment1.intersection(segment2);
-    ellipse(intersection.x, intersection.y, 10);
+
+    if (intersection) {
+        ellipse(intersection.x, intersection.y, 10);
+    }
+
+
 }
 
 function Segment(x1, y1, x2, y2) {
@@ -45,7 +54,8 @@ Segment.prototype.vector = function() {
 /**
  * Calculate intersection point (if any) between this segment, and the otherSegment.
  *
- * return null if the segments are parallel (even if they are collinear and overlap).
+ * return null if the segments are parallel (even if they are collinear and overlap),
+ * or if the segments do not intersect.
  */
 Segment.prototype.intersection = function(otherSegment) {
     var p = this.p1.copy();
@@ -63,11 +73,28 @@ Segment.prototype.intersection = function(otherSegment) {
     }
 
     var t = p5.Vector.cross(s, qMinusp).z / sCrossr;
+    var u = p5.Vector.cross(r, qMinusp).z / sCrossr;
+
+    textSize(32);
+    text(t, 60, 30);
+    text(u, 30, 250);
+
+
+    if (!(t>=0 && t<=1 && u>=0 && u<=1)) {
+        // The line segments do not intersect
+        return null;
+    }
+
     var scaledr = p5.Vector.mult(r, t);
 
     return p5.Vector.add(p, scaledr);
 }
 
+//function mousePressed() {
+//  ellipse(mouseX, mouseY, 20, 20);
+//  // prevent default
+//  return false;
+//}
 
 // next steps:
 //   make segment endpoints selectable
